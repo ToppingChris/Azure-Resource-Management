@@ -2,11 +2,13 @@
 # is installed automatically with the other libraries.
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.resource import ResourceManagementClient
+from azure.mgmt.storage import StorageManagementClient
+from azure.mgmt.storage.models import StorageAccountCreateParameters
 
-import pprint
 
 # Obtain the management object for resources, using the credentials from the CLI login.
 resource_client = get_client_from_cli_profile(ResourceManagementClient)
+storage_client = get_client_from_cli_profile(StorageManagementClient)
 
 # Provision the resource group.
 rg_name = 'rg-databricks'
@@ -36,6 +38,29 @@ def delete_resource_group(group):
     resource_client.resource_groups.delete(group)
     print("Resource group {} deleted".format(group))
 
+# this isn't working 
+def check_storage_name_availability():
+    acc_name = 'badname'
+    print("Checking name...")
+    availability = storage_client.storage_accounts.check_name_availability()
+    print('The account {} is available: {}'.format(acc_name, availability.name_available))
+    print('Reason: {}'.format(availability.reason))
+    print('Detailed message: {}'.format(availability.message))
+    return availability
+
+def create_storage_account(rg, sa_name):
+    storage_account = storage_client.storage_accounts.begin_create(
+    rg,
+    sa_name,
+    StorageAccountCreateParameters(
+        sku = 'Standard_RAGRS',
+        kind = 'StorageV2',
+        location = 'uksouth'
+    )
+    )
+    print("Storage account created - {}".format(sa_name))
+    result = storage_account.result()
+    return result
 
 # Within the ResourceManagementClient is an object named resource_groups,
 # which is of class ResourceGroupsOperations, which contains methods like
