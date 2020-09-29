@@ -5,6 +5,8 @@ from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.models import StorageAccountCreateParameters
 
+import sys
+
 
 # Obtain the management object for resources, using the credentials from the CLI login.
 resource_client = get_client_from_cli_profile(ResourceManagementClient)
@@ -39,28 +41,61 @@ def delete_resource_group(group):
     print("Resource group {} deleted".format(group))
 
 # this isn't working 
-def check_storage_name_availability():
-    acc_name = 'badname'
+def create_storage_account(rg_name, acc_name, location, kind, sku):
     print("Checking name...")
-    availability = storage_client.storage_accounts.check_name_availability()
-    print('The account {} is available: {}'.format(acc_name, availability.name_available))
-    print('Reason: {}'.format(availability.reason))
-    print('Detailed message: {}'.format(availability.message))
-    return availability
+    availability = storage_client.storage_accounts.check_name_availability(
+        {
+            "name": acc_name,
+            "type": 'Microsoft.Storage/storageAccounts'
+        }
+        )
 
-def create_storage_account(rg, sa_name):
-    storage_account = storage_client.storage_accounts.begin_create(
-    rg,
-    sa_name,
-    StorageAccountCreateParameters(
-        sku = 'Standard_RAGRS',
-        kind = 'StorageV2',
-        location = 'uksouth'
-    )
-    )
-    print("Storage account created - {}".format(sa_name))
-    result = storage_account.result()
-    return result
+    if not availability.name_available:
+        print("Storage name already in use, try another one")
+        print("Terminating script")
+        sys.exit()
+    elif availability.name_available:
+        print("The name is available so let's provision the storage account...")
+
+        # Long-running operations return a poller object; calling poller.result()
+        # waits for completion.
+
+        poller = storage_client.storage_accounts.begin_create(
+            rg_name,
+            acc_name,
+            {
+                "location": location,
+                "kind": kind,
+                "sku": {"name": sku}
+            }            
+        )
+
+        account_result = poller.result()
+        print("Storage account created - {}".format(account_result.name))
+
+
+def get_storage_access_key(rg_name, sa_name):
+    # Retrieve the account's primary access key and generate a connection string.
+    keys = storage_client.storage_accounts.list_keys(rg_name, sa_name)
+    print("Primary key for storage account - {}".format(keys.keys[0].value))
+    #conn_string = f"DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName={STORAGE_ACCOUNT_NAME};AccountKey={keys.keys[0].value}"
+    #print(f"Connection string: {conn_string}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Within the ResourceManagementClient is an object named resource_groups,
 # which is of class ResourceGroupsOperations, which contains methods like
