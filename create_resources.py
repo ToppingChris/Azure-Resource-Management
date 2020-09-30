@@ -4,6 +4,7 @@ from azure.common.client_factory import get_client_from_cli_profile
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.models import StorageAccountCreateParameters
+from azure.mgmt.databricks import databricks_client
 
 import sys
 
@@ -11,6 +12,7 @@ import sys
 # Obtain the management object for resources, using the credentials from the CLI login.
 resource_client = get_client_from_cli_profile(ResourceManagementClient)
 storage_client = get_client_from_cli_profile(StorageManagementClient)
+db_client = get_client_from_cli_profile(databricks_client)
 
 # Provision the resource group.
 rg_name = 'rg-databricks'
@@ -78,8 +80,23 @@ def get_storage_access_key(rg_name, sa_name):
     # Retrieve the account's primary access key and generate a connection string.
     keys = storage_client.storage_accounts.list_keys(rg_name, sa_name)
     print("Primary key for storage account - {}".format(keys.keys[0].value))
-    #conn_string = f"DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName={STORAGE_ACCOUNT_NAME};AccountKey={keys.keys[0].value}"
-    #print(f"Connection string: {conn_string}")
+    conn_string = "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName={};AccountKey={}".format(sa_name, keys.keys[0].value)
+    print("Connection string: {}".format(conn_string))
+
+
+def create_databricks_workspace(rg_name, ws_name, location, sku, rg_id):
+    new_workspace = db_client.create_or_update(
+        {
+            "location": location,
+            "sku": {"name": sku},
+            "properties.managedResourceGroupId": rg_id
+        },
+        rg_name,
+        ws_name
+    )
+
+    ws_result = new_workspace.result()
+    print("New workspace created - {}".format(ws_result.name))
 
 
 
