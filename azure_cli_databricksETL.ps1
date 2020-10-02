@@ -31,6 +31,13 @@ az storage account create `
     --location uksouth `
     --sku Standard_RAGRS
 
+# create a Databricks workspace
+az databricks workspace create `
+    --name ctdatabricksws `
+    --location uksouth `
+    --resource-group rg_databricks `
+    --sku standard
+
 
 
     
