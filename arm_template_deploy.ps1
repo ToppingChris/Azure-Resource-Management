@@ -2,6 +2,9 @@ powershell `
 # define template path variable
 $template_file = "C:\Users\dasfl\Git\Azure-Resource-Management\arm_template.json" `
 
+# set account context
+az account set --subscription {id or name}
+
 # deploy the blank template to start with
 az deployment group create `
     --name blanktemplate `
@@ -93,3 +96,49 @@ az deployment group create `
 #       }
 #     }
 #   }
+
+# add app service plan from exported template to existing template
+az deployment group create `
+    --name addappserviceplan `
+    --resource-group rg_arm `
+    --template-file $template_file `
+    --parameters storagePrefix=store storageSKU=Standard_LRS
+
+# add web app from quickstart template on Github
+az deployment group create `
+  --name addwebapp `
+  --resource-group rg_arm `
+  --template-file $template_file `
+  --parameters storagePrefix=store storageSKU=Standard_LRS webAppName=demoapp
+
+# add resource tags
+az deployment group create `
+    --name addtags `
+    --resource-group rg_arm `
+    --template-file $template_file `
+    --parameters storagePrefix=store storageSKU=Standard_LRS webAppName=demoapp
+
+# use parameter files to deploy to dev and prod
+
+# create new dev resource group and reference dev params file
+$template_file="C:\Users\dasfl\Git\Azure-Resource-Management\arm_template.json" 
+$devParameterFile="C:\Users\dasfl\Git\Azure-Resource-Management\arm_parameters_dev.json" 
+az group create `
+    --name rg_arm_dev `
+    --location "uksouth" 
+az deployment group create `
+    --name devenvironment `
+    --resource-group rg_arm_dev `
+    --template-file $template_file `
+    --parameters $devParameterFile
+
+# create a new Prod resource group amd reference Prod params file
+$prodParameterFile="C:\Users\dasfl\Git\Azure-Resource-Management\arm_parameters_prod.json"
+az group create `
+    --name rg_arm_prod `
+    --location "uksouth"
+az deployment group create `
+    --name prodenvironment `
+    --resource-group rg_arm_prod `
+    --template-file $template_file `
+    --parameters $prodParameterFile
