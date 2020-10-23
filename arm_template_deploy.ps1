@@ -1,6 +1,6 @@
 powershell `
 # define template path variable
-$template_file = "C:\Users\dasfl\Git\Azure-Resource-Management\arm_template.json" `
+$template_file = "C:\Users\dasfl\Git\Azure-Resource-Management\demo_template.json" `
 
 # set account context
 az account set --subscription {id or name}
@@ -16,6 +16,11 @@ az deployment group create `
     --resource-group rg_arm `
     --template-file $template_file
 
+# what-if checking
+az deployment group what-if `
+    --resource-group rg_arm `
+    --template-file $template_file
+    
 # add storage to the template
 az deployment group create `
     --name addstorage `
