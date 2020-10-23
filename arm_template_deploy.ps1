@@ -5,6 +5,11 @@ $template_file = "C:\Users\dasfl\Git\Azure-Resource-Management\arm_template.json
 # set account context
 az account set --subscription {id or name}
 
+# create resource group
+az group create `
+    --name rg_arm `
+    --location uksouth
+
 # deploy the blank template to start with
 az deployment group create `
     --name blanktemplate `
